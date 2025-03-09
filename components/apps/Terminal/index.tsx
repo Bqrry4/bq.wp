@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef, useState } from "react";
+import { ReactElement, useRef, useState } from "react";
 import Prompt from "./Prompt";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import { processPrompt } from "./commands/commands";
 
-const Terminal = (): React.ReactElement => {
+const Terminal = (): ReactElement => {
 
     //Prompt string
     const PS1 = "|•˕•マ ~> ";

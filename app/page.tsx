@@ -1,10 +1,14 @@
-import Terminal from "../components/Terminal";
+import WindowsView from "../components/core/windows/WindowsView";
+import Desktop from "../components/desktop/Desktop";
 
 const App = () => {
- 
-  return (
-    <Terminal />
-  );
+
+    return (
+        <div>
+            <Desktop />
+            <WindowsView />
+        </div>
+    );
 }
 
 export default App;

@@ -1,5 +1,5 @@
 'use client';
-import { ChangeEvent, KeyboardEvent, FC, useImperativeHandle, useRef, useState, useLayoutEffect, useEffect } from "react";
+import { ChangeEvent, KeyboardEvent, useImperativeHandle, useRef, useState, useLayoutEffect, useEffect } from "react";
 
 type PromptRef = {
 	ref: React.Ref<{
@@ -9,7 +9,7 @@ type PromptRef = {
 	onSubmit(prompt: string): void;
 }
 
-const Prompt: FC<PromptRef> = ({ ref, history, onSubmit }) => {
+const Prompt = ({ ref, history, onSubmit }: PromptRef) => {
 
 	const [input, setInput] = useState('');
 	const inputRef = useRef<HTMLSpanElement>(null);
