@@ -87,12 +87,11 @@ const Prompt = ({ ref, history, onSubmit }: PromptRef) => {
 		setInput(e.target.textContent ?? '');
 	};
 
-	//! ContentEditable set on plaintext-only when firefox 136 will be released
 	return (
 		<span ref={inputRef}
 			onKeyDown={handleKeyDown}
 			onInput={handleChange}
-			contentEditable spellCheck="false"
+			contentEditable="plaintext-only" spellCheck="false"
 			className=" bg-transparent border-none outline-none
 						max-w-full resize-none break-all whitespace-pre-wrap"
 		>{input}</span>
