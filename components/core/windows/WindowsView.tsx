@@ -11,12 +11,12 @@ const WindowsView = (): ReactElement => {
     const windows = [
         new WindowProps({
             size :{
-                x: 200,
-                y: 500
+                x: 500,
+                y: 300
             },
             position: {
-                x: 20,
-                y: 50
+                x: 200,
+                y: 150
             },
             WindowContent: Terminal,
             fullscreen: false,

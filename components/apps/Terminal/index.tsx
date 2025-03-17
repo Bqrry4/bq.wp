@@ -3,7 +3,7 @@
 import { ReactElement, useRef, useState } from "react";
 import Prompt from "./Prompt";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
-import { processPrompt } from "./commands/commands";
+import { processPrompt } from "./commands";
 
 const Terminal = (): ReactElement => {
 
