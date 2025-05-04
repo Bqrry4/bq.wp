@@ -5,7 +5,7 @@
 
 import { writeFile } from "@/core/filesystem/FileSystem";
 import { Command } from "../commands";
-import WBindings from "@/core/wasi-bindings/WBindings";
+import WBindings from "@/core/wasm/WBindings";
 
 const REGISTRY_URL = "https://registry.wapm.io/graphql";
 
