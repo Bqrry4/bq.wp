@@ -3,7 +3,7 @@ import WindowsView from "../components/core/windows/WindowsView";
 import Desktop from "../components/desktop/Desktop";
 
 const App = () => {
-
+    initFs();
     return (
         <div>
             <Desktop />

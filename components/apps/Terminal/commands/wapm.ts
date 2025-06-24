@@ -5,7 +5,7 @@
 
 import { writeFile } from "@/core/filesystem/FileSystem";
 import { Command } from "../commands";
-import WBindings from "@/core/wasm/WBindings";
+import WasiBindings from "@/core/wasm/p1/WasiBindings";
 
 const REGISTRY_URL = "https://registry.wapm.io/graphql";
 
@@ -109,7 +109,7 @@ async function installPackage(pkg: string) {
     const bytes = webcBin.subarray(boundary.start, boundary.start + boundary.len);
     const mod = new WebAssembly.Module(bytes);
 
-    const bindings = new WBindings();
+    const bindings = new WasiBindings();
     const memory = new WebAssembly.Memory({
         initial: 1,
     });
