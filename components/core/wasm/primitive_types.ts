@@ -1,5 +1,5 @@
 /**
- * This file implements some basic and struct type that maps properties over a DataView.
+ * This file implements some basic and struct types that maps properties over a DataView.
  */
 
 /**
@@ -26,7 +26,7 @@ export type int16_t = number & {};
 export type int32_t = number & {};
 export type int64_t = bigint & {};
 /**
- * The actual values that are used to for serialization.
+ * The actual values that are used for serialization.
  */
 export const uint8_t: p_type<uint8_t> = { size: 1 };
 export const uint16_t: p_type<uint16_t> = { size: 2 };
@@ -50,11 +50,13 @@ const type_names = new Map<p_type<unknown>, string>([
 ]);
 
 /** Recursive so that struct can be nested */
-type ExtractField<T> =
-    T extends { props: Record<string, p_type<unknown>> } ?
-    Struct<T["props"]> : T extends _struct ?
-    T : T extends p_type<infer F> ?
-    F : never;
+type ExtractField<T> = T extends { props: Record<string, p_type<unknown>> }
+    ? Struct<T["props"]>
+    : T extends _struct
+      ? T
+      : T extends p_type<infer F>
+        ? F
+        : never;
 
 /** The defined struct type */
 export type Struct<T extends Record<string, p_type<unknown>>> = _struct & {
@@ -65,7 +67,7 @@ export type Struct<T extends Record<string, p_type<unknown>>> = _struct & {
 function struct<T extends Record<string, p_type<unknown>>>(
     props: T,
     view: DataView,
-    address: number
+    address: number,
 ) {
     return new _struct(props, view, address) as Struct<T>;
 }
@@ -80,12 +82,12 @@ class _struct implements p_type<_struct> {
     constructor(
         props: Record<string, p_type<unknown>>,
         view: DataView,
-        address: number
+        address: number,
     ) {
         let offset = address;
         for (const name in props) {
             let type = props[name];
-            
+
             let get: () => unknown;
             let set: (value: any) => void;
 
@@ -103,18 +105,22 @@ class _struct implements p_type<_struct> {
                 case int64_t:
                     let type_s = type_names.get(type)!;
                     get = () => {
-                        return (view[`get${type_s}` as keyof DataView] as Function)
-                            .call(view, byteOffset, true);
+                        return (
+                            view[`get${type_s}` as keyof DataView] as Function
+                        ).call(view, byteOffset, true);
                     };
                     set = (value: any) => {
-                        (view[`set${type_s}` as keyof DataView] as Function)
-                            .call(view, byteOffset, value, true);
+                        (
+                            view[`set${type_s}` as keyof DataView] as Function
+                        ).call(view, byteOffset, value, true);
                     };
 
                     break;
                 default:
                     get = () => type;
-                    set = (val) => { type = val };
+                    set = (val) => {
+                        type = val;
+                    };
             }
 
             Object.defineProperty(this, name, {
@@ -129,58 +135,44 @@ class _struct implements p_type<_struct> {
 
         this.size = offset - address;
     }
-
 }
 
 /**
- * *Deref* a struct from pointer.  
- * Same as struct() but gets a pointer  
+ * *Deref* a struct from pointer.
+ * Same as struct() but gets a pointer
  * Needs _props explicitly as the type T is erased
  * @type is actually props
  * @returns A representation of a struct over a buffer, not a copy, not an actual object
  */
 export function deref<
     T extends Struct<R>,
-    R extends Record<string, p_type<unknown>>
->(
-    ptr: ptr<T>,
-    type: R,
-    view: DataView,
-) : Struct<R> {
+    R extends Record<string, p_type<unknown>>,
+>(ptr: ptr<T>, type: R, view: DataView): Struct<R> {
     return struct(type, view, ptr) as T;
 }
 
 /**
  * @returns a string value from buffer
  */
-export const fromRefS = (() => {
+export const fromRefString = (() => {
     const decoder = new TextDecoder();
 
-    return (
-        view: DataView,
-        ptr: ptr<string>,
-        len: number
-    ) => {
+    return (view: DataView, ptr: ptr<string>, len: number) => {
         const buffer = new Uint8Array(view.buffer, ptr, len);
         return decoder.decode(buffer);
-    }
+    };
 })();
 
 /**
  * Write a string to buffer.
- * 
  */
-export const toRefS = (() => {
+export const toRefString = (() => {
     const encoder = new TextEncoder();
 
-    return (
-        view: DataView,
-        ptr: ptr<string>,
-        value: string
-    ) => {
+    return (view: DataView, ptr: ptr<string>, value: string) => {
         const bytes = encoder.encode(value);
         const buffer = new Uint8Array(view.buffer, ptr, bytes.length);
         buffer.set(bytes);
         return bytes.length;
-    }
+    };
 })();

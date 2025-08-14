@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { vec2 } from "../utils/vec2";
+import { vec2 } from "../definitions/vec2";
 import { observable } from "mobx";
 
 export class WindowProps {

@@ -1,4 +1,5 @@
-import { ptr, toRefS } from "../../primitive_types";
+import { ptr, uint32_t } from '@/core/wasm/primitive_types';
+import {errno_t} from "../types"
 
 interface UseArgsParams {
     args: string[];
@@ -16,7 +17,6 @@ export function useArgs({
         //Pre encode args
         const [args_size, args_enc] = args.reduce(
             ([size, collection], arg) => {
-                toRefS
                 const encoded = encoder.encode(`${arg}\0`);
                 size += encoded.length;
                 collection.push(encoded);
@@ -27,15 +27,15 @@ export function useArgs({
 
         return {
             args_sizes_get: (
-                argc: ptr<number>,
-                argv_buf_size: ptr<number>
+                argc: ptr<uint32_t>,
+                argv_buf_size: ptr<uint32_t>
             ) => {
                 memoryView().setUint32(argc, args_enc.length, true);
                 memoryView().setUint32(argv_buf_size, args_size, true);
-                return 0;
+                return errno_t.SUCCESS;
             },
             args_get: (
-                argv: ptr<number>,
+                argv: ptr<uint32_t>,
                 argv_buf: ptr<string>
             ) => {
                 args_enc.reduce((arg_p, argc, i) => {
@@ -43,7 +43,7 @@ export function useArgs({
                     memoryView().setUint32(argv + i * 4, arg_p, true); //inc pointer
                     return arg_p + argc.length;
                 }, argv_buf.valueOf());
-                return 0;
+                return errno_t.SUCCESS;
             },
         }
     }
