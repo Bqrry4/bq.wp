@@ -5,6 +5,7 @@ import {
     uint8_t,
     uint32_t,
     uint64_t,
+    fromRefString,
 } from "@/core/wasm/primitive_types";
 import {
     prestat_t,
@@ -18,8 +19,15 @@ import {
     oflags_t,
     fdflags_t,
 } from "../types";
-import { BrowserFS, FsNodeType, FileNode, IFileSystem } from "@/core/filesystem/FileSystem";
-import { Writable } from "@/core/definitions/io";
+import {
+    BrowserFS,
+    FsNodeType,
+    FileNode,
+    IFileSystem,
+    DirectoryNode,
+} from "@/core/filesystem/FileSystem";
+import { Writable } from "@/core/lib/io";
+import { Ok, Result } from "@/core/lib/monads/result";
 
 interface UseFdParams {
     stdin?: string;
@@ -85,7 +93,7 @@ export function useFd({ stdin, stdout, fs }: UseFdParams) {
                 memoryView().setUint8(fdstat, filetype);
                 return errno_t.SUCCESS;
             },
-            path_open: (
+            path_open: async (
                 dirfd: size_t,
                 dirflags: lookupflags_t,
                 path: ptr<string>,
@@ -96,9 +104,36 @@ export function useFd({ stdin, stdout, fs }: UseFdParams) {
                 _fs_rights_inheriting: uint64_t,
                 /* ... */
                 fdflags: fdflags_t,
-                openfd: ptr<size_t>,
+                openedfd: ptr<size_t>,
             ) => {
-                console.log("ewlp");
+                if (!fs) return errno_t.NOSYS;
+                let dir = fs.getByFD(dirfd);
+                if (!dir) return errno_t.BADF;
+                if (dir.node.type !== FsNodeType.Directory)
+                    return errno_t.NOTDIR;
+
+                let path_d = fromRefString(memoryView(), path, path_len);
+                let fd = await fs.open(
+                    dir.node as DirectoryNode,
+                    path_d,
+                    oflags,
+                );
+
+                if (fd.isErr()) {
+                    switch (fd.error) {
+                        case "a":
+                            return errno_t.NOTDIR;
+                        case "b":
+                            return errno_t.NOENT;
+                    }
+                    return -1;
+                }
+
+                //FIX this
+                if (!fd) return errno_t.ISDIR;
+
+                memoryView().setUint32(openedfd, fd.value, true);
+                return errno_t.SUCCESS;
             },
             fd_write: async (
                 fd: size_t,

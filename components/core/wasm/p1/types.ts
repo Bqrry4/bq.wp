@@ -14,6 +14,8 @@ export const enum errno_t {
     BADF = 8,
     /* Is a directory */
     ISDIR = 31,
+    /* No such file or directory */
+    NOENT = 44,
     /* Function not supported */
     NOSYS = 52,
     /* Not a directory or a symbolic link to a directory */
@@ -35,7 +37,7 @@ export const enum preopentype_t {
     Dir,
 }
 
-export const enum oflags_t {
+export enum oflags_t {
     Create = 1 << 0,
     Directory = 1 << 1,
     Exclusive = 1 << 2,

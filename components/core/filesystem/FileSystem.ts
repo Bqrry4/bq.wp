@@ -1,7 +1,13 @@
 "use client";
 
 import { FileHandle } from "fs/promises";
-import { Readable, Writable } from "../definitions/io";
+import { Readable, Writable } from "../lib/io";
+import { fdflags_t, oflags_t } from "../wasm/p1/types";
+import { Result } from "../lib/monads/result";
+
+/* Reusing those as new type for easier decoupling, when there will be the need */
+export const OpenFlags = oflags_t;
+export type OpenFlags = oflags_t;
 
 export enum FsNodeType {
     Directory,
@@ -15,6 +21,7 @@ interface FsNode {
 export interface DirectoryNode extends FsNode {
     readonly type: FsNodeType.Directory;
     getEntries(): void;
+    getChild(name: string): Promise<FsNode>;
 }
 
 export interface FileNode extends FsNode, Writable, Readable {
@@ -57,6 +64,9 @@ class OPFsDirNode implements DirectoryNode {
     readonly type = FsNodeType.Directory;
 
     constructor(public handle: FileSystemDirectoryHandle) {}
+    getChild(name: string): Promise<FsNode> {
+        throw new Error("Method not implemented.");
+    }
     getEntries(): void {
         throw new Error("Method not implemented.");
     }
@@ -84,7 +94,11 @@ class OPFsDirNode implements DirectoryNode {
 
 //2 types of nodes, in memory and browser handles
 export interface IFileSystem {
-    open(): void;
+    open(
+        dir: DirectoryNode,
+        path: string,
+        flags: OpenFlags,
+    ): Promise<Result<number, string>>;
     close(fd: number): void;
     resolve(): void;
     getByFD(fd: number): OpenFD | undefined;
@@ -96,10 +110,13 @@ const FS_HIERARCHY = ["wapm", "usr"];
 export class BrowserFS {
     private preopens: Array<string> = [];
     private openFDs = new Map<number, OpenFD>();
-    private freeFDs: Array<number> = [];
 
     //This might be delegated to a fd table if there will be a need
     nextFD = 3;
+
+    private allocFD(): number {
+        return this.nextFD++;
+    }
 
     async init() {
         const root = await navigator.storage.getDirectory();
@@ -125,7 +142,34 @@ export class BrowserFS {
         return undefined;
     }
 
-    private async resolve(path: string) {
+    async open(
+        dir: DirectoryNode,
+        path: string,
+        flags: OpenFlags,
+    ): Promise<Result<number, string>> {
+        //strip last node from path, with fallback to dir for immediate nodes
+        path = path.replace(/\/?[^/]+$/, "") || ".";
+
+        let fsNode = await this.resolve(dir, path);
+        if (!fsNode) return Result.Err("path invalid?");
+        if (fsNode.type != FsNodeType.Directory) return Result.Err("not a dir");
+        if (flags & OpenFlags.Directory) {
+            //mkdir
+        } else {
+        }
+
+        //check for dir flags
+
+        let fd = this.allocFD();
+
+        return Result.Ok(fd);
+    }
+
+    //!This need testing
+    private async resolve(
+        dir: DirectoryNode,
+        path: string,
+    ): Promise<FsNode | undefined> {
         const nodes = path.split("/");
 
         let parts = [];
@@ -136,12 +180,13 @@ export class BrowserFS {
             parts.push(n);
         }
 
-        // let handle = root;
-        // for (let n of parts) {
-        //   handle = await handle.getDirectoryHandle(n);
-        // }
+        let child: FsNode = dir;
+        for (let part of parts) {
+            child = await dir.getChild(part);
+            if (!child) return undefined;
+        }
 
-        // return handle;
+        return child;
     }
 
     // async open(path: string) {
